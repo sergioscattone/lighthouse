@@ -1,0 +1,55 @@
+"A datetime string with format `Y-m-d H:i:s`, e.g. `2018-05-23 13:43:32`."
+scalar DateTime @scalar(class: "Nuwave\\Lighthouse\\Schema\\Types\\Scalars\\DateTime")
+
+"Indicates what fields are available at the top level of a query operation."
+type Query {
+    "Retrieve Users and Their Most Expensive Order"
+    usersAndOrders: [User!]! @all
+
+    "Retrieve Users Who Have Purchased All Products"
+    usersWithAllProducts: [User!]! @all(builder: "App\\Models\\User@withAllProducts")
+
+    "Retrieve Users with Highest Total Sales"
+    usersWithHighestTotalSales: [User!]! @all(builder: "App\\Models\\User@withHighestTotalSales")
+}
+
+"Account of a person who utilizes this application."
+type User {
+    "Unique primary key."
+    id: ID!
+
+    "Non-unique name."
+    name: String!
+
+    "Unique email address."
+    email: String!
+
+    "When the email was verified."
+    email_verified_at: DateTime
+
+    "When the account was created."
+    created_at: DateTime!
+
+    "When the account was last updated."
+    updated_at: DateTime!
+
+    "Orders"
+    orders: [Order!]! @hasMany
+
+    "Most expensive order"
+    mostExpensiveOrder: Order @method(name: "mostExpensiveOrder")
+}
+
+type Product {
+  id: ID!
+  name: String
+  price: Float
+}
+
+type Order {
+  id: ID!
+  product: Product! @belongsTo
+  user: User! @belongsTo
+  quantity: Int
+  total_amount: Float
+}

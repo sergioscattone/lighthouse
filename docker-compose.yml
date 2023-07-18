@@ -1,0 +1,45 @@
+version: "3.9"
+services:
+  php-fpm:
+    build:
+      context: .
+      dockerfile: ./docker/php/dockerfile
+    working_dir: /application
+    volumes:
+      - ./:/application
+      - ./docker/php/default.conf:/usr/local/etc/php/conf.d/default.conf
+      #- ./docker/php/prod.default.conf:/usr/local/etc/php/conf.d/default.conf change this for prod
+    depends_on:
+      - mysql
+    tty: true
+    networks:
+      - lighthouse_network
+
+  web:
+    image: nginx:alpine
+    working_dir: /application
+    ports:
+      - "80:80"
+    volumes:
+      - .:/application
+      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf
+    depends_on:
+      - php-fpm
+    networks:
+      - lighthouse_network
+
+  mysql:
+    image: mysql:5.7
+    platform: linux/amd64
+    tmpfs: /var/lib/mysql
+    environment:
+      MYSQL_DATABASE: laravel
+      MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
+    ports:
+      - "3306:3306"
+    networks:
+      - lighthouse_network
+
+networks:
+  lighthouse_network:
+    driver: bridge

@@ -8,7 +8,6 @@ services:
     volumes:
       - ./:/application
       - ./docker/php/default.conf:/usr/local/etc/php/conf.d/default.conf
-      #- ./docker/php/prod.default.conf:/usr/local/etc/php/conf.d/default.conf change this for prod
     depends_on:
       - mysql
     tty: true

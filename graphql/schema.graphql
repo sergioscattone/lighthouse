@@ -37,7 +37,7 @@ type User {
     orders: [Order!]! @hasMany
 
     "Most expensive order"
-    mostExpensiveOrder: Order @method(name: "mostExpensiveOrder")
+    mostExpensiveOrder: Order @hasOne
 }
 
 type Product {

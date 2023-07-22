@@ -5,6 +5,7 @@ namespace App\Models;
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\DB;
@@ -53,30 +54,41 @@ class User extends Authenticatable
         return $this->HasMany(Order::class, 'user_id');
     }
 
-    public function mostExpensiveOrder(): Order|null
+    public function mostExpensiveOrder(): HasOne
     {
-        return Order::where('user_id', $this->id)->orderBy('total_amount')->limit(1)->first();
+        return $this->HasOne(Order::class, 'user_id')->orderBy('total_amount', 'desc');
     }
 
     public function withAllProducts(): Builder
     {
-        return DB::table($this->getTable())
-            ->whereIn('id', function($query)
-            {
-                $query->select(DB::raw(
-                    '`user_id` from (select `user_id`, count(DISTINCT `product_id`) as user_prod_qt '.
-                    'FROM orders group by user_id having user_prod_qt = (select count(id) from `products`)) as pre_filter'));
-            });
+        return User::whereIn('id', function($query) {
+            // I prefered to use functional $query way instead of User::select('user_id')
+            // because 'user_id' does not belong to users, it belongs to a pivot subquery
+            $query->select('user_id')
+                ->from(
+                    // IDK how to write DB::raw('count(DISTINCT `product_id`) as user_prod_qt') with eloquent :'(
+                    Order::select('user_id', DB::raw('count(DISTINCT `product_id`) as user_prod_qt'))
+                        ->groupBy('user_id')
+                        ->having('user_prod_qt', Product::count())
+                );
+        })
+        ->getQuery();
     }
 
     public function withHighestTotalSales(): Builder
     {
-        return DB::table($this->getTable())
-            ->whereIn('id', function($query)
-            {
-                $query->select(DB::raw(
-                    '`user_id` from (select `user_id`, sum(`total_amount`) as user_prod_amount '.
-                    'FROM orders group by user_id order by user_prod_amount desc limit '.self::HIEGHEST_QT.') as pre_filter'));
-            });
+        return User::whereIn('id', function($query) {
+            // I prefered to use functional $query way instead of User::select('user_id')
+            // because 'user_id' does not belong to users, it belongs to a pivot subquery
+            $query->select('user_id')
+                ->from(
+                    // IDK how to write DB::raw('sum(`total_amount`) as user_prod_amount') with eloquent :'(
+                    Order::select('user_id', DB::raw('sum(`total_amount`) as user_prod_amount'))
+                        ->groupBy('user_id')
+                        ->orderBy('user_prod_amount', 'desc')
+                        ->limit(self::HIEGHEST_QT)
+                );
+        })
+        ->getQuery();
     }
 }

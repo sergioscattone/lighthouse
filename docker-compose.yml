@@ -7,8 +7,9 @@ services:
     working_dir: /application
     volumes:
       - ./:/application
-      - ./docker/php/default.conf:/usr/local/etc/php/conf.d/default.conf
-      #- ./docker/php/prod.default.conf:/usr/local/etc/php/conf.d/default.conf change this for prod
+    command: >
+      bash -c "php artisan migrate --seed --force
+      && /bin/bash"
     depends_on:
       - mysql
     tty: true

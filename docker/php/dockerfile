@@ -2,6 +2,8 @@ FROM php:8.1.0-fpm
 WORKDIR "/application"
 
 COPY --from=composer /usr/bin/composer /usr/bin/composer
+COPY docker/php/php.ini /usr/local/etc/php/php.ini
+COPY docker/php/opcache.ini /usr/local/etc/php/conf.d/opcache.ini
 
 RUN apt-get update && \
     apt-get install --yes \
@@ -10,15 +12,8 @@ RUN apt-get update && \
         zip \
         libicu-dev \
     && docker-php-ext-install \
+        opcache \
         zip \
         mysqli \
         pdo_mysql \
-        intl \
-    && rm -rf /var/lib/apt/lists/* \
-    && pecl install \
-        xdebug \
-        redis \
-    && docker-php-ext-enable \
-        xdebug \
-        redis \
-    && php artisan migrate:fresh --seed
+        intl
